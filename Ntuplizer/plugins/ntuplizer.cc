@@ -3,6 +3,9 @@
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/one/EDAnalyzer.h"
 // #include "FWCore/Framework/interface/EDProducer.h"
+#include <Math/Vector3D.h>
+#include <Math/VectorUtil.h>
+
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -34,6 +37,10 @@ namespace MTYPE {
 const char* DSA = "DSA";
 const char* DGL = "DGL";
 }  // namespace MTYPE
+
+typedef ROOT::Math::XYZVector XYZVector;
+using ROOT::Math::VectorUtil::Angle;
+
 
 float dxy_value(const reco::GenParticle& p, const reco::Vertex& pv) {
     float vx = p.vx();
@@ -70,7 +77,7 @@ bool passTagID(const reco::Track* track, const char* mtype) {
     return passID;
 }
 
-bool passProbeID(const reco::Track* track, const TVector3& v_tag, const char* mtype) {
+bool passProbeID(const reco::Track* track, const XYZVector& v_tag, const char* mtype) {
     bool passID = false;
     if (mtype == MTYPE::DSA) {
         if (track->hitPattern().numberOfValidMuonDTHits() +
@@ -79,15 +86,13 @@ bool passProbeID(const reco::Track* track, const TVector3& v_tag, const char* mt
             return passID;
         }
         if (track->pt() <= 3.5) { return passID; }
-        TVector3 v_probe = TVector3();
-        v_probe.SetPtEtaPhi(track->pt(), track->eta(), track->phi());
-        if (v_probe.Angle(v_tag) <= 2.1) { return passID; }
+        XYZVector v_probe = XYZVector(track->px(), track->py(), track->pz());
+        if (Angle(v_probe, v_tag) <= 2.1) { return passID; }
         passID = true;
     } else if (mtype == MTYPE::DGL) {
         if (track->pt() <= 20) { return passID; }
-        TVector3 v_probe = TVector3();
-        v_probe.SetPtEtaPhi(track->pt(), track->eta(), track->phi());
-        if (v_probe.Angle(v_tag) <= 2.8) { return passID; }
+        XYZVector v_probe = XYZVector(track->px(), track->py(), track->pz());
+        if (Angle(v_probe, v_tag) <= 2.8) { return passID; }
         passID = true;
     } else {
         std::cout << "Error (in passProbeID): wrong muon type" << std::endl;
@@ -513,8 +518,8 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             dmu_dgl_passTagID[ndmu] = passTagID(globalTrack, "DGL");
             if (dmu_dgl_passTagID[ndmu]) {
                 // Search probe
-                TVector3 v_tag = TVector3();
-                v_tag.SetPtEtaPhi(globalTrack->pt(), globalTrack->eta(), globalTrack->phi());
+                XYZVector v_tag =
+                    XYZVector(globalTrack->px(), globalTrack->py(), globalTrack->pz());
                 const reco::Muon* muonProbeTemp =
                     nullptr;  // pointer for temporal probe (initialized to nullptr)
                 for (unsigned int j = 0; j < dmuons->size();
@@ -525,21 +530,23 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     const reco::Track* trackProbeCandidate =
                         (muonProbeCandidate.combinedMuon()).get();
                     if (passProbeID(trackProbeCandidate, v_tag, "DGL")) {
-                        TVector3 v_probe = TVector3();
-                        v_probe.SetPtEtaPhi(trackProbeCandidate->pt(), trackProbeCandidate->eta(),
-                                            trackProbeCandidate->phi());
+                        XYZVector v_probe =
+                            XYZVector(trackProbeCandidate->px(), trackProbeCandidate->py(),
+                                      trackProbeCandidate->pz());
                         if (!dmu_dgl_hasProbe[ndmu]) {
                             dmu_dgl_hasProbe[ndmu] = true;
                             muonProbeTemp = &(dmuons->at(j));
                             dmu_dgl_probeID[ndmu] = j;
-                            dmu_dgl_cosAlpha[ndmu] = cos(v_tag.Angle(v_probe));
+                            dmu_dgl_cosAlpha[ndmu] =
+                                cos(Angle(v_probe, v_tag));
                         } else {
                             const reco::Track* trackProbeTemp =
                                 (muonProbeTemp->combinedMuon()).get();
                             if (trackProbeCandidate->pt() > trackProbeTemp->pt()) {
                                 muonProbeTemp = &(dmuons->at(j));
                                 dmu_dgl_probeID[ndmu] = j;
-                                dmu_dgl_cosAlpha[ndmu] = cos(v_tag.Angle(v_probe));
+                                dmu_dgl_cosAlpha[ndmu] =
+                                    cos(Angle(v_probe, v_tag));
                             } else {
                                 std::cout << ">> Probe candidate " << j << " has lower pt than "
                                           << dmu_dgl_probeID[ndmu] << std::endl;
@@ -568,8 +575,7 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             dmu_dsa_passTagID[ndmu] = passTagID(outerTrack, "DSA");
             if (dmu_dsa_passTagID[ndmu]) {
                 // Search probe
-                TVector3 v_tag = TVector3();
-                v_tag.SetPtEtaPhi(outerTrack->pt(), outerTrack->eta(), outerTrack->phi());
+                XYZVector v_tag = XYZVector(outerTrack->px(), outerTrack->py(), outerTrack->pz());
                 const reco::Muon* muonProbeTemp =
                     nullptr;  // pointer for temporal probe (initialized to nullptr)
                 for (unsigned int j = 0; j < dmuons->size();
@@ -580,21 +586,23 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                     const reco::Track* trackProbeCandidate =
                         (muonProbeCandidate.standAloneMuon()).get();
                     if (passProbeID(trackProbeCandidate, v_tag, "DSA")) {
-                        TVector3 v_probe = TVector3();
-                        v_probe.SetPtEtaPhi(trackProbeCandidate->pt(), trackProbeCandidate->eta(),
-                                            trackProbeCandidate->phi());
+                        XYZVector v_probe =
+                            XYZVector(trackProbeCandidate->px(), trackProbeCandidate->py(),
+                                      trackProbeCandidate->pz());
                         if (!dmu_dsa_hasProbe[ndmu]) {
                             dmu_dsa_hasProbe[ndmu] = true;
                             muonProbeTemp = &(dmuons->at(j));
                             dmu_dsa_probeID[ndmu] = j;
-                            dmu_dsa_cosAlpha[ndmu] = cos(v_tag.Angle(v_probe));
+                            dmu_dsa_cosAlpha[ndmu] =
+                                cos(Angle(v_probe, v_tag));
                         } else {
                             const reco::Track* trackProbeTemp =
                                 (muonProbeTemp->standAloneMuon()).get();
                             if (trackProbeCandidate->pt() > trackProbeTemp->pt()) {
                                 muonProbeTemp = &(dmuons->at(j));
                                 dmu_dsa_probeID[ndmu] = j;
-                                dmu_dsa_cosAlpha[ndmu] = cos(v_tag.Angle(v_probe));
+                                dmu_dsa_cosAlpha[ndmu] =
+                                    cos(Angle(v_probe, v_tag));
                             } else {
                                 std::cout << ">> Probe candidate " << j << " has lower pt than "
                                           << dmu_dsa_probeID[ndmu] << std::endl;
