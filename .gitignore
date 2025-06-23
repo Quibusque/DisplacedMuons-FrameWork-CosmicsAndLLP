@@ -1,0 +1,16 @@
+Analyzer/condor/
+Analyzer/include/__pycache__/
+Analyzer/out.log
+Analyzer/rlopezru.cc
+Analyzer/v2/
+MiniAOD_prod/__pycache__/
+MiniAOD_prod/crab.log
+MiniAOD_prod/crab_projects/
+MiniAOD_prod/step0.root
+MiniAOD_prod/Run3DDM/crab_2022_*.py
+MiniAOD_prod/Run3DDM/crab_HTo2LongLivedTo2mu2jets_*.py
+MiniAOD_prod/Run3DDM/crab_projects/
+Ntuplizer/crab.log
+Ntuplizer/python/__pycache__/
+Ntuplizer/test/__pycache__/
+Ntuplizer/test/crab.log
