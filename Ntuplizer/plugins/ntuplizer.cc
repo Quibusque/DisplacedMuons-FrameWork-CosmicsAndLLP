@@ -108,7 +108,7 @@ class ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
 
       edm::ParameterSet parameters;
 
-      bool isData = true;
+      bool isCosmics = true;
       bool isAOD  = false;
       //
       // --- Tokens and Handles
@@ -230,7 +230,7 @@ ntuplizer::ntuplizer(const edm::ParameterSet& iConfig) {
    parameters = iConfig;
 
    // Analyzer parameters
-   isData = parameters.getParameter<bool>("isData");
+   isCosmics = parameters.getParameter<bool>("isCosmics");
    isAOD = parameters.getParameter<bool>("isAOD");  
  
    counts = new TH1F("counts", "", 1, 0, 1);
