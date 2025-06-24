@@ -99,10 +99,10 @@ bool passProbeID(const reco::Track* track, const XYZVector& v_tag, const char* m
     return passID;
 }
 
-class ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
+class my_ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
    public:
-    explicit ntuplizer(const edm::ParameterSet&);
-    ~ntuplizer();
+    explicit my_ntuplizer(const edm::ParameterSet&);
+    ~my_ntuplizer();
 
     edm::ConsumesCollector iC = consumesCollector();
     static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
@@ -236,7 +236,7 @@ class ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 };
 
 // Constructor
-ntuplizer::ntuplizer(const edm::ParameterSet& iConfig) {
+my_ntuplizer::my_ntuplizer(const edm::ParameterSet& iConfig) {
     usesResource("TFileService");
 
     parameters = iConfig;
@@ -258,10 +258,10 @@ ntuplizer::ntuplizer(const edm::ParameterSet& iConfig) {
 }
 
 // Destructor
-ntuplizer::~ntuplizer() {}
+my_ntuplizer::~my_ntuplizer() {}
 
 // beginJob (Before first event)
-void ntuplizer::beginJob() {
+void my_ntuplizer::beginJob() {
     std::cout << "Begin Job" << std::endl;
 
     // Init the file and the TTree
@@ -366,7 +366,7 @@ void ntuplizer::beginJob() {
 }
 
 // endJob (After event loop has finished)
-void ntuplizer::endJob() {
+void my_ntuplizer::endJob() {
     std::cout << "End Job" << std::endl;
     file_out->cd();
     tree_out->Write();
@@ -375,14 +375,14 @@ void ntuplizer::endJob() {
 }
 
 // fillDescriptions
-void ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+void my_ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
     edm::ParameterSetDescription desc;
     desc.setUnknown();
     descriptions.addDefault(desc);
 }
 
 // Analyze (per event)
-void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
+void my_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
     iEvent.getByToken(dglToken, dgls);
     iEvent.getByToken(dsaToken, dsas);
     iEvent.getByToken(dmuToken, dmuons);
@@ -666,4 +666,4 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     tree_out->Fill();
 }
 
-DEFINE_FWK_MODULE(ntuplizer);
+DEFINE_FWK_MODULE(my_ntuplizer);
