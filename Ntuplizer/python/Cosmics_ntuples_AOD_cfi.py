@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-ntuples = cms\.EDAnalyzer\(
+ntuples = cms.EDAnalyzer(
     "my_ntuplizer",
     nameOfOutput=cms.string("ntuples.root"),
     isCosmics=cms.bool(True),
