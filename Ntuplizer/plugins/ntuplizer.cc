@@ -223,6 +223,8 @@ class ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     // ----------------------------------
     Float_t dmu_t0_InOut[200] = {0.};
     Float_t dmu_t0_OutIn[200] = {0.};
+    bool dmu_dsa_isProbe[200] = {false};
+    bool dmu_dgl_isProbe[200] = {false};
 
     //
     // --- Output
@@ -359,6 +361,8 @@ void ntuplizer::beginJob() {
     // ----------------------------------
     tree_out->Branch("dmu_t0_InOut", dmu_t0_InOut, "dmu_t0_InOut[ndmu]/F");
     tree_out->Branch("dmu_t0_OutIn", dmu_t0_OutIn, "dmu_t0_OutIn[ndmu]/F");
+    tree_out->Branch("dmu_dsa_isProbe", dmu_dsa_isProbe, "dmu_dsa_isProbe[ndmu]/O");
+    tree_out->Branch("dmu_dgl_isProbe", dmu_dgl_isProbe, "dmu_dgl_isProbe[ndmu]/O");
 }
 
 // endJob (After event loop has finished)
@@ -410,6 +414,8 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         dmu_numberOfMatchedRPCLayers[ndmu] = dmuon.numberOfMatchedRPCLayers();
         dmu_t0_InOut[ndmu] = dmuon.time().timeAtIpInOut;
         dmu_t0_OutIn[ndmu] = dmuon.time().timeAtIpOutIn;
+        dmu_dsa_isProbe[ndmu] = false;
+        dmu_dgl_isProbe[ndmu] = false;
 
         // Access the DGL track associated to the displacedMuon
         // std::cout << "isGlobalMuon: " << dmuon.isGlobalMuon() << std::endl;
@@ -588,8 +594,8 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                 XYZVector v_tag = XYZVector(outerTrack->px(), outerTrack->py(), outerTrack->pz());
                 const reco::Muon* muonProbeTemp =
                     nullptr;  // pointer for temporal probe (initialized to nullptr)
-                for (unsigned int j = 0; j < dmuons->size();
-                     j++) {  // Loop over the rest of the muons
+                for (unsigned int j = 0; j < dmuons->size(); j++) {
+                    // Loop over the rest of the muons
                     if (i == j) { continue; }
                     const reco::Muon& muonProbeCandidate(dmuons->at(j));
                     if (!muonProbeCandidate.isStandAloneMuon()) { continue; }  // Get only dsas
@@ -624,6 +630,17 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
             dmu_dsa_hasProbe[ndmu] = false;
             dmu_dsa_probeID[ndmu] = 0;
             dmu_dsa_cosAlpha[ndmu] = 0.;
+        }
+        ndmu++;
+    }
+    // After all tag and probes have been assigned definitively, we can set the isProbe variables
+    ndmu = 0;
+    for (unsigned int i = 0; i < dmuons->size(); i++) {
+        if (dmu_isDGL[ndmu] && dmu_dgl_hasProbe[ndmu]) {
+            dmu_dgl_isProbe[dmu_dgl_probeID[ndmu]] = true;
+        }
+        if (dmu_isDSA[ndmu] && dmu_dsa_hasProbe[ndmu]) {
+            dmu_dsa_isProbe[dmu_dsa_probeID[ndmu]] = true;
         }
         ndmu++;
     }
