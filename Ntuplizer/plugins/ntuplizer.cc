@@ -41,7 +41,6 @@ const char* DGL = "DGL";
 typedef ROOT::Math::XYZVector XYZVector;
 using ROOT::Math::VectorUtil::Angle;
 
-
 float dxy_value(const reco::GenParticle& p, const reco::Vertex& pv) {
     float vx = p.vx();
     float vy = p.vy();
@@ -219,6 +218,12 @@ class ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     Int_t dmu_dtk_nValidStripHits[200] = {0};
     Int_t dmu_dtk_nhits[200] = {0};
 
+    // ----------------------------------
+    // additional variables by Marco
+    // ----------------------------------
+    Float_t dmu_t0_InOut[200] = {0.};
+    Float_t dmu_t0_OutIn[200] = {0.};
+
     //
     // --- Output
     //
@@ -349,6 +354,11 @@ void ntuplizer::beginJob() {
     for (unsigned int ihlt = 0; ihlt < HLTPaths_.size(); ihlt++) {
         tree_out->Branch(TString(HLTPaths_[ihlt]), &triggerPass[ihlt]);
     }
+    // ----------------------------------
+    // additional variables by Marco
+    // ----------------------------------
+    tree_out->Branch("dmu_t0_InOut", dmu_t0_InOut, "dmu_t0_InOut[ndmu]/F");
+    tree_out->Branch("dmu_t0_OutIn", dmu_t0_OutIn, "dmu_t0_OutIn[ndmu]/F");
 }
 
 // endJob (After event loop has finished)
@@ -398,6 +408,8 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
         dmu_numberOfChambersCSCorDT[ndmu] = dmuon.numberOfChambersCSCorDT();
         dmu_numberOfMatchedStations[ndmu] = dmuon.numberOfMatchedStations();
         dmu_numberOfMatchedRPCLayers[ndmu] = dmuon.numberOfMatchedRPCLayers();
+        dmu_t0_InOut[ndmu] = dmuon.time().timeAtIpInOut;
+        dmu_t0_OutIn[ndmu] = dmuon.time().timeAtIpOutIn;
 
         // Access the DGL track associated to the displacedMuon
         // std::cout << "isGlobalMuon: " << dmuon.isGlobalMuon() << std::endl;
@@ -537,16 +549,14 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                             dmu_dgl_hasProbe[ndmu] = true;
                             muonProbeTemp = &(dmuons->at(j));
                             dmu_dgl_probeID[ndmu] = j;
-                            dmu_dgl_cosAlpha[ndmu] =
-                                cos(Angle(v_probe, v_tag));
+                            dmu_dgl_cosAlpha[ndmu] = cos(Angle(v_probe, v_tag));
                         } else {
                             const reco::Track* trackProbeTemp =
                                 (muonProbeTemp->combinedMuon()).get();
                             if (trackProbeCandidate->pt() > trackProbeTemp->pt()) {
                                 muonProbeTemp = &(dmuons->at(j));
                                 dmu_dgl_probeID[ndmu] = j;
-                                dmu_dgl_cosAlpha[ndmu] =
-                                    cos(Angle(v_probe, v_tag));
+                                dmu_dgl_cosAlpha[ndmu] = cos(Angle(v_probe, v_tag));
                             } else {
                                 std::cout << ">> Probe candidate " << j << " has lower pt than "
                                           << dmu_dgl_probeID[ndmu] << std::endl;
@@ -593,16 +603,14 @@ void ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
                             dmu_dsa_hasProbe[ndmu] = true;
                             muonProbeTemp = &(dmuons->at(j));
                             dmu_dsa_probeID[ndmu] = j;
-                            dmu_dsa_cosAlpha[ndmu] =
-                                cos(Angle(v_probe, v_tag));
+                            dmu_dsa_cosAlpha[ndmu] = cos(Angle(v_probe, v_tag));
                         } else {
                             const reco::Track* trackProbeTemp =
                                 (muonProbeTemp->standAloneMuon()).get();
                             if (trackProbeCandidate->pt() > trackProbeTemp->pt()) {
                                 muonProbeTemp = &(dmuons->at(j));
                                 dmu_dsa_probeID[ndmu] = j;
-                                dmu_dsa_cosAlpha[ndmu] =
-                                    cos(Angle(v_probe, v_tag));
+                                dmu_dsa_cosAlpha[ndmu] = cos(Angle(v_probe, v_tag));
                             } else {
                                 std::cout << ">> Probe candidate " << j << " has lower pt than "
                                           << dmu_dsa_probeID[ndmu] << std::endl;
