@@ -517,9 +517,14 @@ void my_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             // A gen muon is gen matched if its index is anywhere in the
             //  dmu_dsa/dgl_genMatchedID array
             for (unsigned int i = 0; i < dmuons->size(); i++) {
-                Int_t genID = dmu_dsa_genMatchedID[i];
-                if (genID == -1) { continue; }
-                if (genID == ngenmu) { genmu_genMatched[ngenmu] = true; }
+                Int_t dsaGenID = dmu_dsa_genMatchedID[i];
+                Int_t dglGenID = dmu_dgl_genMatchedID[i];
+                
+                if ((dsaGenID != -1 && dsaGenID == ngenmu) || 
+                    (dglGenID != -1 && dglGenID == ngenmu)) {
+                    genmu_genMatched[ngenmu] = true;
+                    break; // No need to continue once we find a match
+                }
             }
             // Fill the genmu variables
             genmu_lxy[ngenmu] = XYZVector(genPart.vx(), genPart.vy(), genPart.vz()).rho();
