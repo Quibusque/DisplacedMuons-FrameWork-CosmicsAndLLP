@@ -79,7 +79,9 @@ process.GlobalTag = GlobalTag(process.GlobalTag, gTag)
 
 ## Define the process to run
 ##
-process.load("DisplacedMuons-FrameWork.Ntuplizer.Cosmics_ntuples_MiniAOD_cfi")
+process.load(
+    "DisplacedMuons-FrameWork-CosmicsAndLLP.Ntuplizer.Cosmics_ntuples_MiniAOD_cfi"
+)
 
 process.ntuples.nameOfOutput = args.out_file
 

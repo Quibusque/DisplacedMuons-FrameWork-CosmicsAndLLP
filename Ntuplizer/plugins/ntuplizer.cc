@@ -114,7 +114,7 @@ class my_ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 
     edm::ParameterSet parameters;
 
-    bool isData = true;
+    bool isCosmics = true;
     bool isAOD = false;
     //
     // --- Tokens and Handles
@@ -124,11 +124,6 @@ class my_ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
     edm::Handle<edm::TriggerResults> triggerBits;
 
-    // displacedGlobalMuons (reco::Track)
-    edm::EDGetTokenT<edm::View<reco::Track> > dglToken;
-    edm::Handle<edm::View<reco::Track> > dgls;
-    // displacedStandAloneMuons (reco::Track)
-    edm::EDGetTokenT<edm::View<reco::Track> > dsaToken;
     edm::Handle<edm::View<reco::Track> > dsas;
     // displacedMuons (reco::Muon // pat::Muon)
     edm::EDGetTokenT<edm::View<reco::Muon> > dmuToken;
@@ -242,15 +237,11 @@ my_ntuplizer::my_ntuplizer(const edm::ParameterSet& iConfig) {
     parameters = iConfig;
 
     // Analyzer parameters
-    isData = parameters.getParameter<bool>("isData");
+    isCosmics = parameters.getParameter<bool>("isCosmics");
     isAOD = parameters.getParameter<bool>("isAOD");
 
     counts = new TH1F("counts", "", 1, 0, 1);
 
-    dglToken = consumes<edm::View<reco::Track> >(
-        parameters.getParameter<edm::InputTag>("displacedGlobalCollection"));
-    dsaToken = consumes<edm::View<reco::Track> >(
-        parameters.getParameter<edm::InputTag>("displacedStandAloneCollection"));
     dmuToken = consumes<edm::View<reco::Muon> >(
         parameters.getParameter<edm::InputTag>("displacedMuonCollection"));
 
@@ -383,8 +374,6 @@ void my_ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions
 
 // Analyze (per event)
 void my_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-    iEvent.getByToken(dglToken, dgls);
-    iEvent.getByToken(dsaToken, dsas);
     iEvent.getByToken(dmuToken, dmuons);
     iEvent.getByToken(triggerBits_, triggerBits);
 
