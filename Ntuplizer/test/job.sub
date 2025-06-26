@@ -1,0 +1,16 @@
+universe            = vanilla
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+RequestCpus = 4
+output = ../condor_logs/job_$(Cluster)_$(Process).out
+error  = ../condor_logs/job_$(Cluster)_$(Process).err
+log    = ../condor_logs/job_$(Cluster).log
++JobFlavour = "microcentury"
+
+# Define all jobs using a queue with variables
+queue executable,arguments from (
+    runJobLLP.sh, "displaced_muons/HTo2ZdTo2mu2x_MZd-40_Epsilon-8e-08 MZd-40_Epsilon-8e-08.root"
+    runJobLLP.sh, "displaced_muons/HTo2ZdTo2mu2x_MZd-40_Epsilon-2e-08 MZd-40_Epsilon-2e-08.root"
+    runJobLLP.sh, "displaced_muons/HTo2ZdTo2mu2x_MZd-40_Epsilon-5e-09 MZd-40_Epsilon-5e-09.root"
+    runJobCosmic.sh, "displaced_muons/reco_test_1.root cosmics_test1.root"
+)
