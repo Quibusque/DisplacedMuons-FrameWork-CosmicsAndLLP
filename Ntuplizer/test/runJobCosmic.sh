@@ -16,7 +16,7 @@ echo "Output file: ${out_file}"
 echo "Log file: ${logfile}"
 start_time=$(date +%s)
 
-cmsRun Cosmics_runNtuplizer_AOD_cfg.py -input ${input} -out_file ${out_file} &> ${logfile}
+cmsRun Cosmics_runNtuplizer_MiniAOD_cfg.py -input ${input} -out_file ${out_file} &> ${logfile}
 
 end_time=$(date +%s)
 echo "Time taken: $((end_time - start_time)) seconds"
