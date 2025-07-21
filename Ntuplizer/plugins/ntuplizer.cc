@@ -55,7 +55,8 @@ float dxy_value(const reco::GenParticle& p, const reco::Vertex& pv) {
 bool passTagID(const reco::Track* track, const char* mtype) {
     bool passID = false;
     if (mtype == MTYPE::DSA) {
-        if (track->phi() >= -0.8 || track->phi() <= -2.1) { return passID; }
+        // Phi angle between -pi/4 and -3/4 pi (symmetric around -pi/2)
+        if (track->phi() >= -0.25*M_PI || track->phi() <= 0.75*M_PI) { return passID; }
         if (abs(track->eta()) >= 0.7) { return passID; }
         if (track->pt() <= 12.5) { return passID; }
         if (track->ptError() / track->pt() >= 0.2) { return passID; }
@@ -63,7 +64,8 @@ bool passTagID(const reco::Track* track, const char* mtype) {
         if (track->normalizedChi2() >= 2) { return passID; }
         passID = true;
     } else if (mtype == MTYPE::DGL) {
-        if (track->phi() >= -0.6 || track->phi() <= -2.6) { return passID; }
+        // Phi angle between -pi/5 and -4/5 pi (symmetric around -pi/2)
+        if (track->phi() >= -0.2*M_PI || track->phi() <= -0.8*M_PI) { return passID; }
         if (abs(track->eta()) >= 0.9) { return passID; }
         if (track->pt() <= 20) { return passID; }
         if (track->ptError() / track->pt() >= 0.3) { return passID; }
