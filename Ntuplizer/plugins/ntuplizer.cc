@@ -169,6 +169,7 @@ class my_ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     Float_t dmu_dsa_ptError[200] = {0.};
     Float_t dmu_dsa_dxy[200] = {0.};
     Float_t dmu_dsa_dz[200] = {0.};
+    Float_t dmu_dsa_pca_phi[200] = {0.};
     Float_t dmu_dsa_normalizedChi2[200] = {0.};
     Float_t dmu_dsa_charge[200] = {0.};
     Int_t dmu_dsa_nMuonHits[200] = {0};
@@ -241,11 +242,11 @@ class my_ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     Int_t dmu_dsa_genMatchedID[200] = {0};
     Int_t dmu_dgl_genMatchedID[200] = {0};
     Int_t ngenmu = 0;
-    bool genmu_genMatched[200] = {false};
-    Float_t genmu_lxy[200] = {0.};
-    Float_t genmu_lz[200] = {0.};
-    Float_t genmu_pt[200] = {0.};
-    Float_t genmu_eta[200] = {0.};
+    bool genmu_genMatched[20] = {false};
+    Float_t genmu_lxy[20] = {0.};
+    Float_t genmu_lz[20] = {0.};
+    Float_t genmu_pt[20] = {0.};
+    Float_t genmu_eta[20] = {0.};
 
     //
     // --- Output
@@ -323,6 +324,7 @@ void my_ntuplizer::beginJob() {
     tree_out->Branch("dmu_dsa_phi", dmu_dsa_phi, "dmu_dsa_phi[ndmu]/F");
     tree_out->Branch("dmu_dsa_ptError", dmu_dsa_ptError, "dmu_dsa_ptError[ndmu]/F");
     tree_out->Branch("dmu_dsa_dxy", dmu_dsa_dxy, "dmu_dsa_dxy[ndmu]/F");
+    tree_out->Branch("dmu_dsa_pca_phi", dmu_dsa_pca_phi, "dmu_dsa_pca_phi[ndmu]/F");
     tree_out->Branch("dmu_dsa_dz", dmu_dsa_dz, "dmu_dsa_dz[ndmu]/F");
     tree_out->Branch("dmu_dsa_normalizedChi2", dmu_dsa_normalizedChi2,
                      "dmu_dsa_normalizedChi2[ndmu]/F");
@@ -519,11 +521,11 @@ void my_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             for (unsigned int i = 0; i < dmuons->size(); i++) {
                 Int_t dsaGenID = dmu_dsa_genMatchedID[i];
                 Int_t dglGenID = dmu_dgl_genMatchedID[i];
-                
-                if ((dsaGenID != -1 && dsaGenID == ngenmu) || 
+
+                if ((dsaGenID != -1 && dsaGenID == ngenmu) ||
                     (dglGenID != -1 && dglGenID == ngenmu)) {
                     genmu_genMatched[ngenmu] = true;
-                    break; // No need to continue once we find a match
+                    break;  // No need to continue once we find a match
                 }
             }
             // Fill the genmu variables
@@ -604,6 +606,7 @@ void my_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             dmu_dsa_phi[ndmu] = outerTrack->phi();
             dmu_dsa_ptError[ndmu] = outerTrack->ptError();
             dmu_dsa_dxy[ndmu] = outerTrack->dxy();
+            dmu_dsa_pca_phi[ndmu] = outerTrack->referencePoint().phi();
             dmu_dsa_dz[ndmu] = outerTrack->dz();
             dmu_dsa_normalizedChi2[ndmu] = outerTrack->normalizedChi2();
             dmu_dsa_charge[ndmu] = outerTrack->charge();
@@ -638,6 +641,7 @@ void my_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             dmu_dsa_phi[ndmu] = 0;
             dmu_dsa_ptError[ndmu] = 0;
             dmu_dsa_dxy[ndmu] = 0;
+            dmu_dsa_pca_phi[ndmu] = 0;
             dmu_dsa_dz[ndmu] = 0;
             dmu_dsa_normalizedChi2[ndmu] = 0;
             dmu_dsa_charge[ndmu] = 0;
