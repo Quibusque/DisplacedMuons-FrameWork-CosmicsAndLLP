@@ -56,7 +56,7 @@ bool passTagID(const reco::Track* track, const char* mtype) {
     bool passID = false;
     if (mtype == MTYPE::DSA) {
         // Phi angle between -pi/4 and -3/4 pi (symmetric around -pi/2)
-        if (track->phi() >= -0.25*M_PI || track->phi() <= 0.75*M_PI) { return passID; }
+        if (track->phi() >= -0.25*M_PI || track->phi() <= -0.75*M_PI) { return passID; }
         if (abs(track->eta()) >= 0.7) { return passID; }
         if (track->pt() <= 12.5) { return passID; }
         if (track->ptError() / track->pt() >= 0.2) { return passID; }
