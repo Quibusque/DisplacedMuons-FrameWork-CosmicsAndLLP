@@ -19,7 +19,7 @@ parser.add_argument(
     "-out_file", type=str, required=True, help="Output file name for the ntuples."
 )
 args = parser.parse_args()
-main_dir = "/eos/home-m/mcrucian/datasets/"
+main_dir = "/eos/home-m/mcrucian/displacedCosmicsMCMini/"
 single_file = True if args.input.endswith(".root") else False
 
 process = cms.Process("demo")
@@ -43,11 +43,12 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 # Select number of events to be processed
 nEvents = -1
 process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(nEvents))
-
+listOfFiles = []
 # Read events
 if single_file:
     # If a single file is provided, use it directly
     listOfFiles = ["file:" + os.path.join(main_dir, args.input)]
+    print(f"Processing single file: {listOfFiles[0]}")
 else:
     # If a directory is provided, list all .root files in it
     my_dir = os.path.join(main_dir, args.input)

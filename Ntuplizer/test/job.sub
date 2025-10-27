@@ -5,12 +5,18 @@ RequestCpus = 4
 output = ../condor_logs/job_$(Cluster)_$(Process).out
 error  = ../condor_logs/job_$(Cluster)_$(Process).err
 log    = ../condor_logs/job_$(Cluster).log
-+JobFlavour = "microcentury"
++JobFlavour = "espresso"
 
 # Define all jobs using a queue with variables
 queue executable,arguments from (
-    runJobLLP.sh, "displaced_muons/HTo2ZdTo2mu2x_MZd-40_Epsilon-8e-08 MZd-40_Epsilon-8e-08.root"
-    runJobLLP.sh, "displaced_muons/HTo2ZdTo2mu2x_MZd-40_Epsilon-2e-08 MZd-40_Epsilon-2e-08.root"
-    runJobLLP.sh, "displaced_muons/HTo2ZdTo2mu2x_MZd-40_Epsilon-5e-09 MZd-40_Epsilon-5e-09.root"
-    runJobCosmic.sh, "displaced_muons/reco_test_1.root cosmics_test1.root"
+    runJobCosmic.sh, "mini_dir_1 cosmicsMC_1.root
+    runJobCosmic.sh, "mini_dir_2 cosmicsMC_2.root"
+    runJobCosmic.sh, "mini_dir_3 cosmicsMC_3.root"
+    runJobCosmic.sh, "mini_dir_4 cosmicsMC_4.root"
+    runJobCosmic.sh, "mini_dir_5 cosmicsMC_5.root"
+    runJobCosmic.sh, "mini_dir_6 cosmicsMC_6.root"
+    runJobCosmic.sh, "mini_dir_7 cosmicsMC_7.root"
+    runJobCosmic.sh, "mini_dir_8 cosmicsMC_8.root"
+    runJobCosmic.sh, "mini_dir_9 cosmicsMC_9.root"
+    runJobCosmic.sh, "mini_dir_10 cosmicsMC_10.root"
 )
