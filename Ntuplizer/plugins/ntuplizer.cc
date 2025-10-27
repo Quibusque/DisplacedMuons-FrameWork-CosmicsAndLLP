@@ -28,6 +28,17 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
+#include "TrackPropagation/SteppingHelixPropagator/interface/SteppingHelixPropagator.h"
+#include "TrackingTools/Records/interface/TrackingComponentsRecord.h"
+#include "MagneticField/Engine/interface/MagneticField.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "TrackingTools/TrajectoryState/interface/FreeTrajectoryState.h"
+#include "TrackingTools/TrajectoryState/interface/TrajectoryStateOnSurface.h"
+#include "DataFormats/GeometrySurface/interface/Cylinder.h"
+#include "DataFormats/GeometrySurface/interface/Plane.h"
+#include "DataFormats/GeometrySurface/interface/Surface.h"
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
+#include "DataFormats/GeometryVector/interface/GlobalVector.h"
 #include "TFile.h"
 #include "TH1F.h"
 #include "TLorentzVector.h"
@@ -39,7 +50,9 @@ const char* DGL = "DGL";
 }  // namespace MTYPE
 
 typedef ROOT::Math::XYZVector XYZVector;
+typedef std::pair<TrajectoryStateOnSurface, double> TsosPath;
 using ROOT::Math::VectorUtil::Angle;
+
 
 float dxy_value(const reco::GenParticle& p, const reco::Vertex& pv) {
     float vx = p.vx();
@@ -141,6 +154,8 @@ class my_ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     // prunedGenParticles (reco::GenParticle)
     edm::EDGetTokenT<edm::View<reco::GenParticle>> prunedGenToken;
     edm::Handle<edm::View<reco::GenParticle>> prunedGen;
+    // Propagator
+    edm::ESGetToken<Propagator, TrackingComponentsRecord> thePropAlongToken;
 
     // Trigger tags
     std::vector<std::string> HLTPaths_;
@@ -150,6 +165,7 @@ class my_ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     Int_t event = 0;
     Int_t lumiBlock = 0;
     Int_t run = 0;
+    bool passTrackerPointing = false;
 
     // ----------------------------------
     // displacedMuons
@@ -249,6 +265,7 @@ class my_ntuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources> {
     Float_t genmu_lz[20] = {0.};
     Float_t genmu_pt[20] = {0.};
     Float_t genmu_eta[20] = {0.};
+    Float_t genmu_phi[20] = {0.};
 
     //
     // --- Output
@@ -274,10 +291,11 @@ my_ntuplizer::my_ntuplizer(const edm::ParameterSet& iConfig) {
 
     dmuToken = consumes<edm::View<reco::Muon>>(
         parameters.getParameter<edm::InputTag>("displacedMuonCollection"));
-    if (!isCosmics) {
-        prunedGenToken = consumes<edm::View<reco::GenParticle>>(
-            parameters.getParameter<edm::InputTag>("prunedGenParticles"));
-    }
+    prunedGenToken = consumes<edm::View<reco::GenParticle>>(
+        parameters.getParameter<edm::InputTag>("prunedGenParticles"));
+    thePropAlongToken = esConsumes(
+        edm::ESInputTag("", parameters.getParameter<std::string>("propagatorAlong")));
+    
 
     triggerBits_ = consumes<edm::TriggerResults>(parameters.getParameter<edm::InputTag>("bits"));
 }
@@ -303,6 +321,7 @@ void my_ntuplizer::beginJob() {
     tree_out->Branch("event", &event, "event/I");
     tree_out->Branch("lumiBlock", &lumiBlock, "lumiBlock/I");
     tree_out->Branch("run", &run, "run/I");
+    tree_out->Branch("passTrackerPointing", &passTrackerPointing, "passTrackerPointing/O");
 
     // ----------------------------------
     // displacedMuons
@@ -409,6 +428,7 @@ void my_ntuplizer::beginJob() {
     gen_tree_out->Branch("genmu_lz", genmu_lz, "genmu_lz[ngenmu]/F");
     gen_tree_out->Branch("genmu_pt", genmu_pt, "genmu_pt[ngenmu]/F");
     gen_tree_out->Branch("genmu_eta", genmu_eta, "genmu_eta[ngenmu]/F");
+    gen_tree_out->Branch("genmu_phi", genmu_phi, "genmu_phi[ngenmu]/F");
 }
 
 // endJob (After event loop has finished)
@@ -432,6 +452,10 @@ void my_ntuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions
 void my_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
     iEvent.getByToken(dmuToken, dmuons);
     iEvent.getByToken(triggerBits_, triggerBits);
+    const Propagator* propagatorAlong = &iSetup.getData(thePropAlongToken);
+    const MagneticField* magField = propagatorAlong->magneticField();
+    passTrackerPointing = false;
+    
 
     // Count number of events read
     counts->Fill(0);
@@ -535,12 +559,60 @@ void my_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
             genmu_lz[ngenmu] = genPart.vz();
             genmu_pt[ngenmu] = genPart.pt();
             genmu_eta[ngenmu] = genPart.eta();
+            genmu_phi[ngenmu] = genPart.phi();
 
             ngenmu++;
         }
         gen_tree_out->Fill();
     }
 
+
+
+    // ----------------------------------
+    // MC cosmics - gen information
+    // ----------------------------------
+    //The point of this is to have information on the vertex of the gen muons
+    //of the cosmics to make appropriate event level cuts e.g. for global muons
+    if (isCosmics) {
+        iEvent.getByToken(prunedGenToken, prunedGen);
+        ngenmu = 0;
+        for (unsigned int j = 0; j < prunedGen->size(); j++) {
+            const reco::GenParticle& genPart(prunedGen->at(j));
+            if (genPart.status() != 1 || abs(genPart.pdgId()) != 13) {
+                continue;  // Only consider stable muons
+            }
+            genmu_genMatched[ngenmu] = false;
+            genmu_lxy[ngenmu] = XYZVector(genPart.vx(), genPart.vy(), genPart.vz()).rho();
+            genmu_lz[ngenmu] = genPart.vz();
+            genmu_pt[ngenmu] = genPart.pt();
+            genmu_eta[ngenmu] = genPart.eta();
+            genmu_phi[ngenmu] = genPart.phi();
+            // ----------------------------------
+            // MC cosmics - propagation
+            // ----------------------------------
+            GlobalPoint genVertex(genPart.vx(), genPart.vy(), genPart.vz());
+            GlobalVector genMomentum(genPart.px(), genPart.py(), genPart.pz());
+            int genCharge = genPart.charge();
+            FreeTrajectoryState genFTS(genVertex, genMomentum, genCharge, magField);
+            TsosPath tsosPath = TsosPath();
+            Float_t radius = 70.0;
+            Float_t minZ = -60.0;
+            Float_t maxZ = 60.0;
+            const Surface::RotationType dummyRot;
+            Cylinder::CylinderPointer theTargetCylinder =
+            Cylinder::build(Surface::PositionType(0., 0., 0.), dummyRot, radius);
+            tsosPath = propagatorAlong->propagateWithPath(genFTS, *theTargetCylinder);
+            if (tsosPath.first.isValid()) {
+                bool withinZRange = tsosPath.first.globalPosition().z() >= minZ &&
+                        tsosPath.first.globalPosition().z() <= maxZ;
+                if (withinZRange) {
+                    passTrackerPointing = true;
+                }
+            } 
+            ngenmu++;
+        }
+        gen_tree_out->Fill();
+    }
     // ----------------------------------
     // displacedMuons Collection
     // ----------------------------------
