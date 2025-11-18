@@ -6,11 +6,12 @@ Taken from [DisplacedMuons-FrameWork](https://github.com/24LopezR/DisplacedMuons
 
 ### Installing
 
-I recommend using `CMSSW_13_2_0`, but any later release should also work. For installing the code, follow these instructions:
+For installing the code, follow these instructions:
 
 ```bash
-cmsrel CMSSW_13_2_0
-cd CMSSW_13_2_0/src
+cmsrel CMSSW_14_0_21
+cd CMSSW_14_0_21/src
 cmsenv
-git clone git@github.com:24LopezR/DisplacedMuons-FrameWork.git
+git clone git@github.com:Quibusque/DisplacedMuons-FrameWork-CosmicsAndLLP.git
 scram b -j8
+```
